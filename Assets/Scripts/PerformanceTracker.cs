@@ -1,12 +1,13 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using System;
 
 public class PerformanceTracker : MonoBehaviour
 {
     public string backendURL = "";
-    public string sceneType = "office";
+    // public string sceneType = "office";
     public string difficulty = "Easy";
 
     public float startTime;
@@ -65,6 +66,14 @@ public class PerformanceTracker : MonoBehaviour
         OnExitReached(elapsedTime);
         Debug.Log("Exit reached!");
         SendDataToBackend();
+
+        StartCoroutine(ReturnToMainMenuAfterDelay(2f));
+    }
+
+    private IEnumerator ReturnToMainMenuAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SceneManager.LoadScene("MainMenu");
     }
 
     private void TriggerAlarm()
@@ -114,11 +123,15 @@ public class PerformanceTracker : MonoBehaviour
 
     public void SendDataToBackend()
     {
-        int userAge = PlayerPrefs.GetInt("UserAge", 69);
-        float weightedScore = CalculatePerformanceScore(userAge);
+        // Retrieve user email and age from PlayerPrefs
+        string userEmail = PlayerPrefs.GetString("UserEmail", "unknown@example.com");
+        string userAge = PlayerPrefs.GetString("UserAge", "69");
+        string sceneType = PlayerPrefs.GetString("SceneType", "Default-scene");
+        // float weightedScore = CalculatePerformanceScore(userAge);
 
         PerformanceData data = new PerformanceData
         {
+            email = userEmail,
             age = userAge,
             sceneType = sceneType,
             difficulty = difficulty,
@@ -126,13 +139,14 @@ public class PerformanceTracker : MonoBehaviour
             timeToExtinguishFire = fireExtinguishedTime >= 0 ? fireExtinguishedTime : 0,
             timeToTriggerAlarm = alarmTriggeredTime >= 0 ? alarmTriggeredTime : 0,
             timeToFindExit = exitTime >= 0 ? exitTime : 0,
-            performanceScore = weightedScore
+            // performanceScore = weightedScore
         };
 
         string jsonData = JsonUtility.ToJson(data);
         StartCoroutine(PostRequest(backendURL, jsonData));
     }
 
+    /*
     private float CalculatePerformanceScore(int age)
     {
         float score = 100;
@@ -157,6 +171,7 @@ public class PerformanceTracker : MonoBehaviour
 
         return Mathf.Max(score, 0);
     }
+    */
 
     IEnumerator PostRequest(string url, string json)
     {
@@ -183,13 +198,14 @@ public class PerformanceTracker : MonoBehaviour
     [Serializable]
     public class PerformanceData
     {
-        public int age;
+        public string email;
+        public string age;
         public string sceneType;
         public string difficulty;
         public float timeToFindExtinguisher;
         public float timeToExtinguishFire;
         public float timeToTriggerAlarm;
         public float timeToFindExit;
-        public float performanceScore;
+        // public float performanceScore;
     }
 }
